@@ -1,20 +1,29 @@
-use std::{ops::Deref, rc::Rc};
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 
+#[derive(Debug)]
 enum List {
-    Cons(i32, Rc<List>),
+    Cons(Rc<RefCell<i32>>, Rc<List>),
     Nil,
 }
 
 use List::{Cons, Nil};
 
 fn main() {
-    let a = Rc::new(Cons(5,
-        Rc::new(Cons(10,
-            Rc::new(Nil)))));
-    let b = Cons(3, Rc::clone(&a));
-    let c = Cons(4, Rc::clone(&a));
+    let value = Rc::new(RefCell::new(5));
+
+    let a = Rc::new(Cons(Rc::clone(&value), Rc::new(Nil)));
+
+    let b = Cons(Rc::new(RefCell::new(6)), Rc::clone(&a));
+    let c = Cons(Rc::new(RefCell::new(10)), Rc::clone(&a));
+    
     show_list(&b);
     show_list(&c);
+    
+    *value.borrow_mut() += 10;
+
+    println!("a after = {:?}", a);
+    println!("b after = {:?}", b);
+    println!("c after = {:?}", c);
     
     let x = 5;
     let y = MyBox::new(x);
@@ -26,7 +35,7 @@ fn main() {
 fn show_list(list: &List) {
     match list {
         Cons(v, rest) => {
-            println!("{v}");
+            println!("{}", v.borrow());
             show_list(rest)
         }
         Nil => println!("end.")
